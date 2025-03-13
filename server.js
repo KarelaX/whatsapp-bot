@@ -2,12 +2,11 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// TOKEN de verificación (debe coincidir con el que ingresaste en Meta)
 const VERIFY_TOKEN = "MiSuperToken12345!";
 
 app.use(express.json());
 
-// Ruta de verificación de Webhooks para Meta
+// Endpoint de verificación del webhook
 app.get("/webhook", (req, res) => {
     let mode = req.query["hub.mode"];
     let token = req.query["hub.verify_token"];
@@ -22,14 +21,22 @@ app.get("/webhook", (req, res) => {
     }
 });
 
-// Ruta para recibir eventos de WhatsApp
+// Manejo de eventos de WhatsApp
 app.post("/webhook", (req, res) => {
     let body = req.body;
 
-    console.log("📩 Evento recibido:", JSON.stringify(body, null, 2));
-
-    // Responder 200 para confirmar que el webhook está activo
-    res.sendStatus(200);
+    if (body.object === "whatsapp_business_account") {
+        body.entry.forEach(entry => {
+            entry.changes.forEach(change => {
+                if (change.field === "messages" || change.field === "message_echoes") {
+                    console.log("📩 Mensaje recibido:", JSON.stringify(change.value, null, 2));
+                }
+            });
+        });
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(404);
+    }
 });
 
 // Iniciar el servidor
