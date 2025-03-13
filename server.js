@@ -7,12 +7,7 @@ const VERIFY_TOKEN = "MiSuperToken12345!";
 
 app.use(express.json());
 
-// Ruta de prueba para verificar que el servidor está activo
-app.get("/", (req, res) => {
-    res.send("🚀 Servidor en Railway funcionando correctamente!");
-});
-
-// Endpoint de verificación de Webhooks para Meta
+// Ruta de verificación de Webhooks para Meta
 app.get("/webhook", (req, res) => {
     let mode = req.query["hub.mode"];
     let token = req.query["hub.verify_token"];
@@ -27,9 +22,13 @@ app.get("/webhook", (req, res) => {
     }
 });
 
-// Endpoint para recibir mensajes de WhatsApp
+// Ruta para recibir eventos de WhatsApp
 app.post("/webhook", (req, res) => {
-    console.log("📩 Mensaje recibido:", JSON.stringify(req.body, null, 2));
+    let body = req.body;
+
+    console.log("📩 Evento recibido:", JSON.stringify(body, null, 2));
+
+    // Responder 200 para confirmar que el webhook está activo
     res.sendStatus(200);
 });
 
