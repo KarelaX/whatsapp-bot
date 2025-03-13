@@ -1,26 +1,27 @@
 {
-  "name": "your-project-name",
+  "name": "whatsapp-dialogflow-bot",
   "version": "1.0.0",
-  "description": "your-description",
+  "description": "Chatbot de WhatsApp integrado con Dialogflow",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "axios": "^1.6.0",
     "body-parser": "^1.20.2",
-    "axios": "^1.6.7",
     "dotenv": "^16.3.1",
-    "@google-cloud/dialogflow": "^4.15.0"
+    "express": "^4.18.2",
+    "@google-cloud/dialogflow": "^4.14.2",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.0"
+    "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18.0.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": ["whatsapp", "bot", "dialogflow", "api"],
+  "author": "Tu Nombre",
+  "license": "MIT"
 }
