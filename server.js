@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = process.env.PORT || 3000;  // <-- Debe ser process.env.PORT
+const PORT = process.env.PORT || 3000;  // ¡IMPORTANTE! Usa process.env.PORT
 
 app.use(express.json());
 
@@ -15,7 +15,7 @@ app.post("/webhook", (req, res) => {
     res.sendStatus(200);
 });
 
-// Iniciar el servidor
+// Mantener el servidor corriendo
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
 });
