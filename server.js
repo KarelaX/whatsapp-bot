@@ -3,7 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // TOKEN de verificación (debe coincidir con el ingresado en Meta)
-const VERIFY_TOKEN = MiSuperToken12345!;
+const VERIFY_TOKEN = "MiSuperToken12345!";
 
 app.use(express.json());
 
