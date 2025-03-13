@@ -1,45 +1,96 @@
 const express = require("express");
+const bodyParser = require("body-parser");
+const axios = require("axios");
+const dialogflow = require("@google-cloud/dialogflow");
+const { v4: uuid } = require("uuid");
+require("dotenv").config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const VERIFY_TOKEN = "MiSuperToken12345!";
+app.use(bodyParser.json());
 
-app.use(express.json());
+// Webhook de WhatsApp
+app.post("/webhook", async (req, res) => {
+    try {
+        const message = req.body.entry[0].changes[0].value.messages[0];
+        const senderId = message.from;
+        const text = message.text.body;
 
-// Endpoint de verificación del webhook
-app.get("/webhook", (req, res) => {
-    let mode = req.query["hub.mode"];
-    let token = req.query["hub.verify_token"];
-    let challenge = req.query["hub.challenge"];
+        console.log("Mensaje recibido:", text);
 
-    if (mode && token === VERIFY_TOKEN) {
-        console.log("✅ Webhook verificado con éxito.");
-        res.status(200).send(challenge);
-    } else {
-        console.log("❌ Falló la verificación del Webhook.");
-        res.sendStatus(403);
-    }
-});
+        // Procesar mensaje con Dialogflow
+        const response = await processDialogflow(text, senderId);
 
-// Manejo de eventos de WhatsApp
-app.post("/webhook", (req, res) => {
-    let body = req.body;
+        // Enviar respuesta a WhatsApp
+        await sendMessageToWhatsApp(senderId, response);
 
-    if (body.object === "whatsapp_business_account") {
-        body.entry.forEach(entry => {
-            entry.changes.forEach(change => {
-                if (change.field === "messages" || change.field === "message_echoes") {
-                    console.log("📩 Mensaje recibido:", JSON.stringify(change.value, null, 2));
-                }
-            });
-        });
         res.sendStatus(200);
-    } else {
-        res.sendStatus(404);
+    } catch (error) {
+        console.error("Error en el webhook:", error);
+        res.sendStatus(500);
     }
 });
 
-// Iniciar el servidor
+// Función para enviar mensaje a Dialogflow
+async function processDialogflow(text, sessionId) {
+    try {
+        const sessionClient = new dialogflow.SessionsClient({
+            keyFilename: "./credentials.json", // Asegúrate de tener este archivo en Railway
+        });
+        const sessionPath = sessionClient.projectAgentSessionPath(
+            process.env.DIALOGFLOW_PROJECT_ID,
+            sessionId
+        );
+
+        const request = {
+            session: sessionPath,
+            queryInput: {
+                text: {
+                    text: text,
+                    languageCode: "es",
+                },
+            },
+        };
+
+        const responses = await sessionClient.detectIntent(request);
+        const result = responses[0].queryResult;
+        return result.fulfillmentText;
+    } catch (error) {
+        console.error("Error al conectar con Dialogflow:", error);
+        return "Lo siento, no puedo responder en este momento.";
+    }
+}
+
+// Función para enviar mensaje a WhatsApp
+async function sendMessageToWhatsApp(recipient, message) {
+    try {
+        await axios.post(
+            `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to: recipient,
+                text: { body: message },
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        console.log("Mensaje enviado a WhatsApp:", message);
+    } catch (error) {
+        console.error("Error al enviar mensaje a WhatsApp:", error.response?.data || error);
+    }
+}
+
+// Endpoint de prueba
+app.get("/", (req, res) => {
+    res.send("Chatbot de WhatsApp con Dialogflow está activo.");
+});
+
+// Servidor corriendo
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`Servidor corriendo en puerto ${PORT}`);
 });
